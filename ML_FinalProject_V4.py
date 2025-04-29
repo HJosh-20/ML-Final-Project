@@ -18,13 +18,6 @@ df['Gender'] = df['Gender'].map({'male': 0, 'female': 1})
 print(df)
 df_test = pd.read_csv('calories_user_data.csv')
 
-'''
-testing the importance of duration feature`
-df_no_duration = df.drop(columns='Duration')
-X = df_no_duration.iloc[:, :-1]
-y = df_no_duration.iloc[:, -1]
-'''
-
 X = df.iloc[:, :-1] #all but last
 y = df.iloc[:, -1]
 print(X.shape)
@@ -49,7 +42,7 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # SVR Model
-def run_svr(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
+def run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled=None):
     model = SVR()
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
@@ -57,12 +50,14 @@ def run_svr(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
     print("R2 Score:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
     print("MAE:", mean_absolute_error(y_test, preds))
-    pred_svr = model.predict(user_df_scaled)
-    print("\nPredicted calories burned (SVR):", round(pred_svr[0], 2))
-    plottingML(preds, title="SVR", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+    if option == 3:
+        pred_svr = model.predict(user_df_scaled)
+        print("\nPredicted calories burned (SVR):", round(pred_svr[0], 2))
+    if option == 1:
+        plottingML(preds, title="SVR", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
 
 # Random Forest
-def run_random_forest(X_train, X_test, y_train, y_test, user_df):
+def run_random_forest(X_train, X_test, y_train, y_test, option, user_df=None):
     model = RandomForestRegressor()
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
@@ -70,12 +65,14 @@ def run_random_forest(X_train, X_test, y_train, y_test, user_df):
     print("R2 Score:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
     print("MAE:", mean_absolute_error(y_test, preds))
-    pred_rf = model.predict(user_df)
-    print("Predicted calories burned (Random Forest):", round(pred_rf[0], 2))
-    plottingML(preds, title="RF", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+    if option == 3:
+        pred_rf = model.predict(user_df)
+        print("\nPredicted calories burned (Random Forest):", round(pred_rf[0], 2))
+    if option == 1:
+        plottingML(preds, title="RF", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
 
 # KNN Regressor
-def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
+def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled=None):
     model = KNeighborsRegressor()
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
@@ -83,26 +80,31 @@ def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
     print("R2 Score:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
     print("MAE:", mean_absolute_error(y_test, preds))
-    pred_knn = model.predict(user_df_scaled)
-    print("Predicted calories burned (KNN):", round(pred_knn[0], 2))
-    plottingML(preds, title="KNN", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+    if option == 3:
+        pred_knn = model.predict(user_df_scaled)
+        print("\nPredicted calories burned (KNN):", round(pred_knn[0], 2))
+    if option == 1:
+        plottingML(preds, title="KNN", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
 
 # Polynomial Regression
-def run_poly(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
+def run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled=None):
     for i in range(1, 4):
         poly = PolynomialFeatures(degree = i)
         x_train_poly = poly.fit_transform(X_train_scaled)
         x_test_poly = poly.transform(X_test_scaled)
-        user_df_poly = poly.transform(user_df_scaled)
         model = LinearRegression().fit(x_train_poly, y_train)
         preds = model.predict(x_test_poly)
         print(f"\nPolynomial Regression (Degree {i}) Results:")
         print("R2 Score:", r2_score(y_test, preds))
         print("MSE:", mean_squared_error(y_test, preds))
         print("MAE:", mean_absolute_error(y_test, preds))
-        pred_poly = model.predict(user_df_poly)
-        print("Predicted calories burned (Random Forest):", round(pred_poly[0], 2))
-   
+        if option == 3:
+            user_df_poly = poly.transform(user_df_scaled)
+            pred_poly = model.predict(user_df_poly)
+            print(f"\nPredicted calories burned:", round(pred_poly[0], 2))
+        if option == 1:
+            plottingML(preds, title=f"Poly Degree {i}", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+
 def get_height_cm():
     while True:
         height_input = input("Enter your height (e.g., 5 foot 2 inches): ").lower()
@@ -175,73 +177,86 @@ def plottingML(preds, title, target_var=None, algorithm_model=None, features_nam
 
 # Main: run all models
 if __name__ == "__main__":
-    #test data inputs height=6 foot 3inches(~190cm), weight=207.2345(~94kg)
-    gender = input("Please enter your gender: ")
+    print("1. Original train and test data w/ graphs")
+    print("2. Generated user input data w/ graphs")
+    print("3. User input predictions w/o graphs")
+    option = int(input("Enter the option you would like select: "))
     while True:
-        if   gender.strip().lower() == "male":
-            gender = 0
-            break
-        elif gender.strip().lower() == "female":
-            gender = 1
-            break
-        else:
-            gender = input("Invalid gender: Please re-enter your gender: ")
-    age = int(input("Please enter your age: "))
-    while True:
-        if age < 20 or age > 79:
-            age = int(input("Invalid age: Please re-enter your age: "))
-        else: 
-            break
-    height_cm = get_height_cm()
-    while True:
-        if height_cm < 123.0 or height_cm > 222.0:
-            print("Invalid height")
-            height_cm = get_height_cm()
-        else: 
-            break
-    print(f"Your height in centimeters is: {height_cm:.2f} cm")
-    weight_kg = get_weight_kg()
-    while True:
-        if weight_kg < 36.0 or weight_kg > 132.0:
-            print("Invalid weight")
-            weight_kg = get_weight_kg()
-        else: 
-            break
-    print(f"Your weight in kilograms is: {weight_kg:.2f} kg")
-    duration = float(input("Please enter the duration of your workout: "))
-    while True:
-        if duration < 1 or duration > 30:
-            duration = float(input("Invalid duration: Please re-enter your duration of your workout: "))
-        else: 
-            break
-    heart_rate = float(input("please enter your average heart rate during your workout: "))
-    while True:
-        if heart_rate < 67 or heart_rate > 128:
-            heart_rate = float(input("Invalid average heart rate: Please re-enter your average heart rate during your workout: "))
+        if option < 1 or option > 3:
+            option = int(input("Invalid option: Please re-enter your option: "))
         else: 
             break
 
-    feature_names = ['Gender', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate']
-    user_data = np.array([gender, age, height_cm, weight_kg, duration, heart_rate]).reshape(1,-1)
-    user_df = pd.DataFrame(user_data, columns=feature_names)
-    print("User data (Dataframe): ")
-    print(user_df)
+    if option == 3: #done
+        print("You selected option 3.")
+        #test data inputs height=6 foot 3inches(~190cm), weight=207.2345(~94kg)
+        gender = input("Please enter your gender: ")
+        while True:
+            if   gender.strip().lower() == "male":
+                gender = 0
+                break
+            elif gender.strip().lower() == "female":
+                gender = 1
+                break
+            else:
+                gender = input("Invalid gender: Please re-enter your gender: ")
+        age = int(input("Please enter your age: "))
+        while True:
+            if age < 20 or age > 79:
+                age = int(input("Invalid age: Please re-enter your age: "))
+            else: 
+                break
+        height_cm = get_height_cm()
+        while True:
+            if height_cm < 123.0 or height_cm > 222.0:
+                print("Invalid height")
+                height_cm = get_height_cm()
+            else: 
+                break
+        print(f"Your height in centimeters is: {height_cm:.2f} cm")
+        weight_kg = get_weight_kg()
+        while True:
+            if weight_kg < 36.0 or weight_kg > 132.0:
+                print("Invalid weight")
+                weight_kg = get_weight_kg()
+            else: 
+                break
+        print(f"Your weight in kilograms is: {weight_kg:.2f} kg")
+        duration = float(input("Please enter the duration of your workout: "))
+        while True:
+            if duration < 1 or duration > 30:
+                duration = float(input("Invalid duration: Please re-enter your duration of your workout: "))
+            else: 
+                break
+        heart_rate = float(input("please enter your average heart rate during your workout: "))
+        while True:
+            if heart_rate < 67 or heart_rate > 128:
+                heart_rate = float(input("Invalid average heart rate: Please re-enter your average heart rate during your workout: "))
+            else: 
+                break
 
-    user_df_scaled = scaler.transform(user_data)
-    print("User data(Dataframe scaled): ", user_df_scaled)
+        feature_names = ['Gender', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate']
+        user_data = np.array([gender, age, height_cm, weight_kg, duration, heart_rate]).reshape(1,-1)
+        user_df = pd.DataFrame(user_data, columns=feature_names)
+        print("User data (Dataframe): ")
+        print(user_df)
 
-    run_svr(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled)
-    run_random_forest(X_train, X_test, y_train, y_test, user_df)
-    run_knn(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled)
-    run_poly(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled)
+        user_df_scaled = scaler.transform(user_data)
+        print("User data(Dataframe scaled): ", user_df_scaled)
 
-    '''
-    #residual boxplots all models
-    plt.figure(figsize=(10, 6))
-    plt.boxplot(model_residuals, labels=model_names)
-    plt.title("Comparison of Residuals Across Models")
-    plt.ylabel("Residuals")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-    '''
+        run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled)
+        run_random_forest(X_train, X_test, y_train, y_test, option, user_df)
+        run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled)
+        run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled)
+    elif option == 2:
+        print("You selected option 2.")
+        run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option)
+        run_random_forest(X_train, X_test, y_train, y_test, option)
+        run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
+        run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
+    elif option == 1: #done
+        print("You selected option 1.")
+        run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option)
+        run_random_forest(X_train, X_test, y_train, y_test, option)
+        run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
+        run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
