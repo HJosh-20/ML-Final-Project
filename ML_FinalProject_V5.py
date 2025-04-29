@@ -11,12 +11,13 @@ from sklearn.linear_model import LinearRegression
 import re
 import warnings
 import seaborn as sns
-
+degree_symbol = "\u00B0"
 warnings.filterwarnings("ignore")
 
 df = pd.read_csv('calories.csv')
 df['Gender'] = df['Gender'].map({'male': 0, 'female': 1})
 
+#generated dataset based on original
 userGenDf = pd.read_csv('calories_user_data.csv')
 generatedX = userGenDf.iloc[:, :-1]
 generatedY = userGenDf.iloc[:, -1]
@@ -47,15 +48,15 @@ def run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scal
     model = SVR()
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
-    print("\n|       SVR Results       |")
-    print("R2 Score:", r2_score(y_test, preds))
-    print("MSE:", mean_squared_error(y_test, preds))
-    print("MAE:", mean_absolute_error(y_test, preds))
     if option == 3:
         pred_svr = model.predict(user_df_scaled)
         print("\nPredicted calories burned (SVR):", round(pred_svr[0], 2))
     if option == 1:
         plottingML(preds, title="SVR", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+        print("\n        SVR Results:       ")
+        print("R2 Score:", r2_score(y_test, preds))
+        print("MSE:", mean_squared_error(y_test, preds))
+        print("MAE:", mean_absolute_error(y_test, preds))
     if option == 2:
         return model
 
@@ -64,15 +65,15 @@ def run_random_forest(X_train, X_test, y_train, y_test, option, user_df=None):
     model = RandomForestRegressor()
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
-    print("\n|   Random Forest Results   |")
-    print("R2 Score:", r2_score(y_test, preds))
-    print("MSE:", mean_squared_error(y_test, preds))
-    print("MAE:", mean_absolute_error(y_test, preds))
     if option == 3:
         pred_rf = model.predict(user_df)
         print("\nPredicted calories burned (Random Forest):", round(pred_rf[0], 2))
     if option == 1:
         plottingML(preds, title="RF", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+        print("\n    Random Forest Results:   ")
+        print("R2 Score:", r2_score(y_test, preds))
+        print("MSE:", mean_squared_error(y_test, preds))
+        print("MAE:", mean_absolute_error(y_test, preds))
     if option == 2:
         return model
 
@@ -81,39 +82,44 @@ def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scal
     model = KNeighborsRegressor()
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
-    print("\n|       KNN Results       |")
-    print("R2 Score:", r2_score(y_test, preds))
-    print("MSE:", mean_squared_error(y_test, preds))
-    print("MAE:", mean_absolute_error(y_test, preds))
     if option == 3:
         pred_knn = model.predict(user_df_scaled)
         print("\nPredicted calories burned (KNN):", round(pred_knn[0], 2))
     if option == 1:
         plottingML(preds, title="KNN", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
+        print("\n        KNN Results:       ")
+        print("R2 Score:", r2_score(y_test, preds))
+        print("MSE:", mean_squared_error(y_test, preds))
+        print("MAE:", mean_absolute_error(y_test, preds))
     if option == 2:
         return model
 
 # Polynomial Regression
 def run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled=None):
-    degree_symbol = "\u00B0"
+    poly_things = []
+    models = []
     for i in range(1, 4):
         poly = PolynomialFeatures(degree = i)
         x_train_poly = poly.fit_transform(X_train_scaled)
         x_test_poly = poly.transform(X_test_scaled)
         model = LinearRegression().fit(x_train_poly, y_train)
         preds = model.predict(x_test_poly)
-        print(f"\n|   Polynomial Regression {i}{degree_symbol} Results   |")
-        print("R2 Score:", r2_score(y_test, preds))
-        print("MSE:", mean_squared_error(y_test, preds))
-        print("MAE:", mean_absolute_error(y_test, preds))
         if option == 3:
             user_df_poly = poly.transform(user_df_scaled)
             pred_poly = model.predict(user_df_poly)
             print(f"\nPredicted calories burned:", round(pred_poly[0], 2))
         if option == 1:
+            print(f"\nPolynomial Regression {i}{degree_symbol} Results:   ")
+            print("R2 Score:", r2_score(y_test, preds))
+            print("MSE:", mean_squared_error(y_test, preds))
+            print("MAE:", mean_absolute_error(y_test, preds))
             plottingML(preds, title=f"Polynomial {i}{degree_symbol}", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
         if option == 2:
-            return model
+            models.append(model)
+            poly_things.append(poly)
+    if option == 2:
+        return models, poly_things
+
    
 def get_height_cm():
     while True:
@@ -187,14 +193,14 @@ def plottingML(preds, title, target_var=None, algorithm_model=None, features_nam
 # Main: run all models
 if __name__ == "__main__":
     while True:
-        print("-------------------------")
-        print("|        Options        |")
-        print("-------------------------")
+        print("-----------------------")
+        print("        Options        ")
+        print("-----------------------")
         print("1. Original train and test data w/ graphs")
         print("2. Generated user input data w/ graphs")
         print("3. User input predictions w/o graphs")
         print("4. End Program")
-        option = int(input("Enter the option you would like select: "))
+        option = int(input("\nEnter the option you would like select: "))
     
         while True:
             if option < 1 or option > 4:
@@ -203,7 +209,6 @@ if __name__ == "__main__":
                 break
 
         if option == 3:
-            print("You selected option 3.")
             #test data inputs height=6 foot 3inches(~190cm), weight=207.2345(~94kg)
             gender = input("Please enter your gender: ")
             while True:
@@ -268,26 +273,46 @@ if __name__ == "__main__":
             print(" ")
 
         elif option == 2:
-            print("You selected option 2.")
             model_svr = run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option)
             model_rf = run_random_forest(X_train, X_test, y_train, y_test, option)
             model_knn = run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
-            model_poly = run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
+            model_poly, poly_feats = run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
 
             generated_preds_svr = model_svr.predict(genX_scaled)
             generated_preds_rf = model_rf.predict(generatedX)
             generated_preds_knn = model_knn.predict(genX_scaled)
-            
-            generated_preds_poly = model_poly.predict(user_df_poly)
 
+            print("\n        SVR Results:       ")
+            print("R2 Score:", r2_score(generatedY, generated_preds_svr))
+            print("MSE:", mean_squared_error(generatedY, generated_preds_svr))
+            print("MAE:", mean_absolute_error(generatedY, generated_preds_svr))
             plottingML(generated_preds_svr, title="SVR (Generated Users)", target_var=generatedY, algorithm_model=model_svr, features_names=generatedX.columns, test_features=generatedX)
+            
+            print("\n    Random Forest Results:   ")
+            print("R2 Score:", r2_score(generatedY, generated_preds_rf))
+            print("MSE:", mean_squared_error(generatedY, generated_preds_rf))
+            print("MAE:", mean_absolute_error(generatedY, generated_preds_rf))
             plottingML(generated_preds_rf, title="RF (Generated Users)", target_var=generatedY, algorithm_model=model_rf, features_names=generatedX.columns, test_features=generatedX)
+            
+            print("\n        KNN Results:       ")
+            print("R2 Score:", r2_score(generatedY, generated_preds_knn))
+            print("MSE:", mean_squared_error(generatedY, generated_preds_knn))
+            print("MAE:", mean_absolute_error(generatedY, generated_preds_knn))
             plottingML(generated_preds_knn, title="KNN (Generated Users)", target_var=generatedY, algorithm_model=model_knn, features_names=generatedX.columns, test_features=generatedX)
-            plottingML(generated_preds_poly, title="Polynomial Regression (Generated Users)", target_var=generatedY, algorithm_model=model_knn, features_names=generatedX.columns, test_features=generatedX)
+            
+            for i in range (3):
+                model = model_poly[i]
+                poly = poly_feats[i]
+                genX_poly = poly.transform(genX_scaled)
+                generated_preds_poly = model.predict(genX_poly)
+                print(f"\nPolynomial Regression {i+1}{degree_symbol} Results:   ")
+                print("R2 Score:", r2_score(generatedY, generated_preds_poly))
+                print("MSE:", mean_squared_error(generatedY, generated_preds_poly))
+                print("MAE:", mean_absolute_error(generatedY, generated_preds_poly))
+                plottingML(generated_preds_poly, title=f"Polynomial Regression ({i+1}{degree_symbol}) (Generated Users)", target_var=generatedY, algorithm_model=model, features_names=generatedX.columns, test_features=generatedX)
             print(" ")
 
         elif option == 1: 
-            print("You selected option 1.")
             run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option)
             run_random_forest(X_train, X_test, y_train, y_test, option)
             run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
