@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore")
 df = pd.read_csv('calories.csv')
 df['Gender'] = df['Gender'].map({'male': 0, 'female': 1})
 print(df)
+df_test = pd.read_csv('calories_user_data.csv')
 
 '''
 testing the importance of duration feature`
@@ -48,7 +49,7 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # SVR Model
-def run_svr(X_train_scaled, X_test_scaled, y_train, y_test):
+def run_svr(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
     model = SVR()
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
@@ -56,11 +57,12 @@ def run_svr(X_train_scaled, X_test_scaled, y_train, y_test):
     print("R2 Score:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
     print("MAE:", mean_absolute_error(y_test, preds))
+    pred_svr = model.predict(user_df_scaled)
+    print("\nPredicted calories burned (SVR):", round(pred_svr[0], 2))
     plottingML(preds, title="SVR", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
-    return model
 
 # Random Forest
-def run_random_forest(X_train, X_test, y_train, y_test):
+def run_random_forest(X_train, X_test, y_train, y_test, user_df):
     model = RandomForestRegressor()
     model.fit(X_train, y_train)
     preds = model.predict(X_test)
@@ -68,11 +70,12 @@ def run_random_forest(X_train, X_test, y_train, y_test):
     print("R2 Score:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
     print("MAE:", mean_absolute_error(y_test, preds))
+    pred_rf = model.predict(user_df)
+    print("Predicted calories burned (Random Forest):", round(pred_rf[0], 2))
     plottingML(preds, title="RF", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
-    return model
 
 # KNN Regressor
-def run_knn(X_train_scaled, X_test_scaled, y_train, y_test):
+def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
     model = KNeighborsRegressor()
     model.fit(X_train_scaled, y_train)
     preds = model.predict(X_test_scaled)
@@ -80,21 +83,25 @@ def run_knn(X_train_scaled, X_test_scaled, y_train, y_test):
     print("R2 Score:", r2_score(y_test, preds))
     print("MSE:", mean_squared_error(y_test, preds))
     print("MAE:", mean_absolute_error(y_test, preds))
+    pred_knn = model.predict(user_df_scaled)
+    print("Predicted calories burned (KNN):", round(pred_knn[0], 2))
     plottingML(preds, title="KNN", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
-    return model
 
 # Polynomial Regression
-def run_poly(X_train_scaled, X_test_scaled, y_train, y_test):
-    for i in range(4):
+def run_poly(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled):
+    for i in range(1, 4):
         poly = PolynomialFeatures(degree = i)
         x_train_poly = poly.fit_transform(X_train_scaled)
         x_test_poly = poly.transform(X_test_scaled)
+        user_df_poly = poly.transform(user_df_scaled)
         model = LinearRegression().fit(x_train_poly, y_train)
         preds = model.predict(x_test_poly)
         print(f"\nPolynomial Regression (Degree {i}) Results:")
         print("R2 Score:", r2_score(y_test, preds))
         print("MSE:", mean_squared_error(y_test, preds))
         print("MAE:", mean_absolute_error(y_test, preds))
+        pred_poly = model.predict(user_df_poly)
+        print("Predicted calories burned (Random Forest):", round(pred_poly[0], 2))
    
 def get_height_cm():
     while True:
@@ -168,6 +175,7 @@ def plottingML(preds, title, target_var=None, algorithm_model=None, features_nam
 
 # Main: run all models
 if __name__ == "__main__":
+    #test data inputs height=6 foot 3inches(~190cm), weight=207.2345(~94kg)
     gender = input("Please enter your gender: ")
     while True:
         if   gender.strip().lower() == "male":
@@ -222,18 +230,10 @@ if __name__ == "__main__":
     user_df_scaled = scaler.transform(user_data)
     print("User data(Dataframe scaled): ", user_df_scaled)
 
-    model_svr = run_svr(X_train_scaled, X_test_scaled, y_train, y_test)
-    model_rf = run_random_forest(X_train, X_test, y_train, y_test)
-    model_knn = run_knn(X_train_scaled, X_test_scaled, y_train, y_test)
-    run_poly(X_train_scaled, X_test_scaled, y_train, y_test)
-
-    pred_svr = model_svr.predict(user_df_scaled)
-    pred_rf = model_rf.predict(user_df)
-    pred_knn = model_knn.predict(user_df_scaled)
-
-    print("\nPredicted calories burned (SVR):", round(pred_svr[0], 2))
-    print("Predicted calories burned (Random Forest):", round(pred_rf[0], 2))
-    print("Predicted calories burned (KNN):", round(pred_knn[0], 2))
+    run_svr(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled)
+    run_random_forest(X_train, X_test, y_train, y_test, user_df)
+    run_knn(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled)
+    run_poly(X_train_scaled, X_test_scaled, y_train, y_test, user_df_scaled)
 
     '''
     #residual boxplots all models
