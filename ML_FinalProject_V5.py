@@ -11,13 +11,12 @@ from sklearn.linear_model import LinearRegression
 import re
 import warnings
 import seaborn as sns
-degree_symbol = "\u00B0"
 warnings.filterwarnings("ignore")
+degree_symbol = "\u00B0"
 
 df = pd.read_csv('calories.csv')
 df['Gender'] = df['Gender'].map({'male': 0, 'female': 1})
 
-#generated dataset based on original
 userGenDf = pd.read_csv('calories_user_data.csv')
 generatedX = userGenDf.iloc[:, :-1]
 generatedY = userGenDf.iloc[:, -1]
@@ -52,13 +51,18 @@ def run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scal
         pred_svr = model.predict(user_df_scaled)
         print("\nPredicted calories burned (SVR):", round(pred_svr[0], 2))
     if option == 1:
-        plottingML(preds, title="SVR", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
         print("\n        SVR Results:       ")
         print("R2 Score:", r2_score(y_test, preds))
         print("MSE:", mean_squared_error(y_test, preds))
         print("MAE:", mean_absolute_error(y_test, preds))
+        plottingML(preds, title="SVR", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
     if option == 2:
-        return model
+        generated_preds_svr = model.predict(genX_scaled)
+        print("\n        SVR Results:       ")
+        print("R2 Score:", r2_score(generatedY, generated_preds_svr))
+        print("MSE:", mean_squared_error(generatedY, generated_preds_svr))
+        print("MAE:", mean_absolute_error(generatedY, generated_preds_svr))
+        plottingML(generated_preds_svr, title="SVR (Generated Users)", target_var=generatedY, algorithm_model=model, features_names=generatedX.columns, test_features=generatedX)
 
 # Random Forest
 def run_random_forest(X_train, X_test, y_train, y_test, option, user_df=None):
@@ -69,13 +73,18 @@ def run_random_forest(X_train, X_test, y_train, y_test, option, user_df=None):
         pred_rf = model.predict(user_df)
         print("\nPredicted calories burned (Random Forest):", round(pred_rf[0], 2))
     if option == 1:
-        plottingML(preds, title="RF", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
-        print("\n    Random Forest Results:   ")
+        print("\n   Random Forest Results:   ")
         print("R2 Score:", r2_score(y_test, preds))
         print("MSE:", mean_squared_error(y_test, preds))
         print("MAE:", mean_absolute_error(y_test, preds))
+        plottingML(preds, title="RF", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
     if option == 2:
-        return model
+        generated_preds_rf = model.predict(generatedX)
+        print("\n    Random Forest Results:   ")
+        print("R2 Score:", r2_score(generatedY, generated_preds_rf))
+        print("MSE:", mean_squared_error(generatedY, generated_preds_rf))
+        print("MAE:", mean_absolute_error(generatedY, generated_preds_rf))
+        plottingML(generated_preds_rf, title="RF (Generated Users)", target_var=generatedY, algorithm_model=model, features_names=generatedX.columns, test_features=generatedX)
 
 # KNN Regressor
 def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled=None):
@@ -86,18 +95,21 @@ def run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scal
         pred_knn = model.predict(user_df_scaled)
         print("\nPredicted calories burned (KNN):", round(pred_knn[0], 2))
     if option == 1:
-        plottingML(preds, title="KNN", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
-        print("\n        KNN Results:       ")
+        print("\n       KNN Results:       ")
         print("R2 Score:", r2_score(y_test, preds))
         print("MSE:", mean_squared_error(y_test, preds))
         print("MAE:", mean_absolute_error(y_test, preds))
+        plottingML(preds, title="KNN", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
     if option == 2:
-        return model
+        generated_preds_knn = model.predict(genX_scaled)
+        print("\n        KNN Results:       ")
+        print("R2 Score:", r2_score(generatedY, generated_preds_knn))
+        print("MSE:", mean_squared_error(generatedY, generated_preds_knn))
+        print("MAE:", mean_absolute_error(generatedY, generated_preds_knn))
+        plottingML(generated_preds_knn, title="KNN (Generated Users)", target_var=generatedY, algorithm_model=model, features_names=generatedX.columns, test_features=generatedX)
 
 # Polynomial Regression
 def run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled=None):
-    poly_things = []
-    models = []
     for i in range(1, 4):
         poly = PolynomialFeatures(degree = i)
         x_train_poly = poly.fit_transform(X_train_scaled)
@@ -115,11 +127,13 @@ def run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_sca
             print("MAE:", mean_absolute_error(y_test, preds))
             plottingML(preds, title=f"Polynomial {i}{degree_symbol}", target_var=y_test, algorithm_model=model, features_names=X.columns, test_features=X_test)
         if option == 2:
-            models.append(model)
-            poly_things.append(poly)
-    if option == 2:
-        return models, poly_things
-
+            user_df_poly = poly.transform(genX_scaled)
+            pred_poly = model.predict(user_df_poly)
+            print(f"\nPolynomial Regression {i}{degree_symbol} Results:   ")
+            print("R2 Score:", r2_score(generatedY, pred_poly))
+            print("MSE:", mean_squared_error(generatedY, pred_poly))
+            print("MAE:", mean_absolute_error(generatedY, pred_poly))
+            plottingML(pred_poly, title=f"Polynomial {i}{degree_symbol} (generated users)", target_var=generatedY, algorithm_model=model, features_names=generatedX.columns, test_features=generatedX)
    
 def get_height_cm():
     while True:
@@ -147,40 +161,38 @@ def get_weight_kg():
 model_residuals = []
 model_names = []
 def plottingML(preds, title, target_var=None, algorithm_model=None, features_names=None, test_features=None):
-    if target_var is not None:
-        # Plot actual vs predicted values
-        plt.figure(figsize=(8, 6))
-        sns.scatterplot(x=target_var, y=preds, hue=test_features['Gender'].map({0: 'Male', 1: 'Female'}), palette={'Male': 'blue', 'Female': 'gold'})
-        plt.plot([min(target_var), max(target_var)], [min(target_var), max(target_var)], linestyle='--', color='red')
-        plt.xlabel("Actual Values")
-        plt.ylabel("Predicted Values")
-        plt.title(f"Actual vs Predicted Values for {title}")
-        plt.show()
+    # Plot actual vs predicted values
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x=target_var, y=preds, hue=test_features['Gender'].map({0: 'Male', 1: 'Female'}), palette={'Male': 'blue', 'Female': 'gold'})
+    plt.plot([min(target_var), max(target_var)], [min(target_var), max(target_var)], linestyle='--', color='red')
+    plt.xlabel("Actual Values")
+    plt.ylabel("Predicted Values")
+    plt.title(f"Actual vs Predicted Values for {title}")
+    plt.show()
 
-        #residual plots
-        residuals = target_var - preds
-        #for box plot residual
-        model_residuals.append(residuals)
-        model_names.append(title)
+    #residual plots
+    residuals = target_var - preds
+    #for box plot residual
+    model_residuals.append(residuals)
+    model_names.append(title)
 
-        plt.figure(figsize=(8, 6))
-        sns.scatterplot(x=preds, y=residuals, hue=test_features['Gender'].map({0: 'Male', 1: 'Female'}), palette={'Male': 'blue', 'Female': 'gold'})
-        #at 0 = prefect prediction, above 0 = model is unpredicted (predicted too low)
-        plt.axhline(y=0, color='red', linestyle='--')
-        plt.xlim(0, 300)
-        plt.xticks(np.arange(0, 301, 50))
-        plt.ylim(-50, 150)
-        plt.yticks(np.arange(-50, 151, 25))
-        plt.xlabel('Predicted values')
-        plt.ylabel('Residuals')
-        plt.title(f"Residual plot for {title}")
-        plt.grid(True)
-        plt.show()
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x=preds, y=residuals, hue=test_features['Gender'].map({0: 'Male', 1: 'Female'}), palette={'Male': 'blue', 'Female': 'gold'})
+    #at 0 = prefect prediction, above 0 = model is unpredicted (predicted too low)
+    plt.axhline(y=0, color='red', linestyle='--')
+    plt.xlim(0, 300)
+    plt.xticks(np.arange(0, 301, 50))
+    plt.ylim(-50, 150)
+    plt.yticks(np.arange(-50, 151, 25))
+    plt.xlabel('Predicted values')
+    plt.ylabel('Residuals')
+    plt.title(f"Residual plot for {title}")
+    plt.grid(True)
+    plt.show()
                  
     #imporant features for RF model.
     if title == 'RF':
         important_features = algorithm_model.feature_importances_
-        print(f'Important Features Values: {important_features}')
         #we get numeric values the important features then order then in decending order so its in order of most important to least important
         indices = np.argsort(important_features)[::-1]
         plt.figure(figsize=(8, 5))
@@ -193,9 +205,9 @@ def plottingML(preds, title, target_var=None, algorithm_model=None, features_nam
 # Main: run all models
 if __name__ == "__main__":
     while True:
-        print("-----------------------")
-        print("        Options        ")
-        print("-----------------------")
+        print("-------------------------")
+        print("         Options         ")
+        print("-------------------------")
         print("1. Original train and test data w/ graphs")
         print("2. Generated user input data w/ graphs")
         print("3. User input predictions w/o graphs")
@@ -210,7 +222,7 @@ if __name__ == "__main__":
 
         if option == 3:
             #test data inputs height=6 foot 3inches(~190cm), weight=207.2345(~94kg)
-            gender = input("Please enter your gender: ")
+            gender = input("\nPlease enter your gender: ")
             while True:
                 if   gender.strip().lower() == "male":
                     gender = 0
@@ -260,11 +272,8 @@ if __name__ == "__main__":
             feature_names = ['Gender', 'Age', 'Height', 'Weight', 'Duration', 'Heart_Rate']
             user_data = np.array([gender, age, height_cm, weight_kg, duration, heart_rate]).reshape(1,-1)
             user_df = pd.DataFrame(user_data, columns=feature_names)
-            print("User data (Dataframe): ")
-            print(user_df)
 
             user_df_scaled = scaler.transform(user_data)
-            print("User data(Dataframe scaled): ", user_df_scaled)
 
             run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option, user_df_scaled)
             run_random_forest(X_train, X_test, y_train, y_test, option, user_df)
@@ -273,43 +282,10 @@ if __name__ == "__main__":
             print(" ")
 
         elif option == 2:
-            model_svr = run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option)
-            model_rf = run_random_forest(X_train, X_test, y_train, y_test, option)
-            model_knn = run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
-            model_poly, poly_feats = run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
-
-            generated_preds_svr = model_svr.predict(genX_scaled)
-            generated_preds_rf = model_rf.predict(generatedX)
-            generated_preds_knn = model_knn.predict(genX_scaled)
-
-            print("\n        SVR Results:       ")
-            print("R2 Score:", r2_score(generatedY, generated_preds_svr))
-            print("MSE:", mean_squared_error(generatedY, generated_preds_svr))
-            print("MAE:", mean_absolute_error(generatedY, generated_preds_svr))
-            plottingML(generated_preds_svr, title="SVR (Generated Users)", target_var=generatedY, algorithm_model=model_svr, features_names=generatedX.columns, test_features=generatedX)
-            
-            print("\n    Random Forest Results:   ")
-            print("R2 Score:", r2_score(generatedY, generated_preds_rf))
-            print("MSE:", mean_squared_error(generatedY, generated_preds_rf))
-            print("MAE:", mean_absolute_error(generatedY, generated_preds_rf))
-            plottingML(generated_preds_rf, title="RF (Generated Users)", target_var=generatedY, algorithm_model=model_rf, features_names=generatedX.columns, test_features=generatedX)
-            
-            print("\n        KNN Results:       ")
-            print("R2 Score:", r2_score(generatedY, generated_preds_knn))
-            print("MSE:", mean_squared_error(generatedY, generated_preds_knn))
-            print("MAE:", mean_absolute_error(generatedY, generated_preds_knn))
-            plottingML(generated_preds_knn, title="KNN (Generated Users)", target_var=generatedY, algorithm_model=model_knn, features_names=generatedX.columns, test_features=generatedX)
-            
-            for i in range (3):
-                model = model_poly[i]
-                poly = poly_feats[i]
-                genX_poly = poly.transform(genX_scaled)
-                generated_preds_poly = model.predict(genX_poly)
-                print(f"\nPolynomial Regression {i+1}{degree_symbol} Results:   ")
-                print("R2 Score:", r2_score(generatedY, generated_preds_poly))
-                print("MSE:", mean_squared_error(generatedY, generated_preds_poly))
-                print("MAE:", mean_absolute_error(generatedY, generated_preds_poly))
-                plottingML(generated_preds_poly, title=f"Polynomial Regression ({i+1}{degree_symbol}) (Generated Users)", target_var=generatedY, algorithm_model=model, features_names=generatedX.columns, test_features=generatedX)
+            run_svr(X_train_scaled, X_test_scaled, y_train, y_test, option)
+            run_random_forest(X_train, X_test, y_train, y_test, option)
+            run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
+            run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
             print(" ")
 
         elif option == 1: 
@@ -328,9 +304,8 @@ if __name__ == "__main__":
             print(" ")
 
         elif option == 4:
-            print("Goodbye!")
+            print("\nGoodbye!")
             break
-
     
     
     
