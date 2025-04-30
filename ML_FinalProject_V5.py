@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, mean_squared_error, r2_score, mean_absolute_error
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.neighbors import KNeighborsRegressor
 from matplotlib import pyplot as plt
 from sklearn.svm import SVR
@@ -202,6 +202,32 @@ def plottingML(preds, title, target_var=None, algorithm_model=None, features_nam
         plt.tight_layout()
         plt.show()
 
+def run_cross_validation(X_train, y_train, X_train_scaled):
+    print("\n  Cross Validation Results  ")
+    svr = SVR()
+    svr_scores = cross_val_score(svr, X_train_scaled, y_train, cv=5, scoring='r2')
+    print("SVR CV R2 Score:", svr_scores.mean())
+
+    knn = KNeighborsRegressor()
+    knn_scores = cross_val_score(knn, X_train_scaled, y_train, cv=5, scoring='r2')
+    print("KNN CV R2 Score:", knn_scores.mean())
+
+    
+    rf = RandomForestRegressor()
+    rf_scores = cross_val_score(rf, X_train, y_train, cv=5, scoring='r2')
+    print("Random Forest CV R2 Score:", rf_scores.mean())
+
+    #no need for d 1 since its just linear regression 
+    for d in [2, 3]:
+        poly = PolynomialFeatures(degree=d)
+        X_poly = poly.fit_transform(X_train_scaled)
+        poly_model = LinearRegression()
+        poly_scores = cross_val_score(poly_model, X_poly, y_train, cv=5, scoring='r2')
+        print(f"Polynomial Degree {d}{degree_symbol} CV R2 Score:", poly_scores.mean())
+
+    print(" ")
+
+
 # Main: run all models
 if __name__ == "__main__":
     while True:
@@ -293,6 +319,10 @@ if __name__ == "__main__":
             run_random_forest(X_train, X_test, y_train, y_test, option)
             run_knn(X_train_scaled, X_test_scaled, y_train, y_test, option)
             run_poly(X_train_scaled, X_test_scaled, y_train, y_test, option)
+
+            #cross valdiation
+            run_cross_validation(X_train, y_train, X_train_scaled)
+
             #residual boxplots all models
             plt.figure(figsize=(10, 6))
             plt.boxplot(model_residuals, labels=model_names)
@@ -306,6 +336,3 @@ if __name__ == "__main__":
         elif option == 4:
             print("\nGoodbye!")
             break
-    
-    
-    
